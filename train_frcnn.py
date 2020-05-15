@@ -99,7 +99,7 @@ with open(config_output_filename, 'wb') as config_f:
 random.shuffle(all_imgs)
 
 num_imgs = len(all_imgs)
-
+print('Total images count {}'.format(len(all_imgs)))
 train_imgs = [s for s in all_imgs if s['imageset'] == 'trainval']
 val_imgs = [s for s in all_imgs if s['imageset'] == 'test']
 
@@ -136,10 +136,10 @@ model_all = Model([img_input, roi_input], rpn[:2] + classifier)
 try:
 	print('loading weights from {}'.format(C.base_net_weights))
 	model_rpn.load_weights(C.base_net_weights, by_name=True)
+
 	model_classifier.load_weights(C.base_net_weights, by_name=True)
 except:
-	print('Could not load pretrained model weights. Weights can be found in the keras application folder \
-		https://github.com/fchollet/keras/tree/master/keras/applications')
+	print('Could not load pretrained model weights.')
 
 optimizer = Adam(lr=1e-5)
 optimizer_classifier = Adam(lr=1e-5)
@@ -147,7 +147,7 @@ model_rpn.compile(optimizer=optimizer, loss=[losses.rpn_loss_cls(num_anchors), l
 model_classifier.compile(optimizer=optimizer_classifier, loss=[losses.class_loss_cls, losses.class_loss_regr(len(classes_count)-1)], metrics={'dense_class_{}'.format(len(classes_count)): 'accuracy'})
 model_all.compile(optimizer='sgd', loss='mae')
 
-epoch_length = 500
+epoch_length = 70
 num_epochs = int(options.num_epochs)
 iter_num = 0
 
@@ -179,7 +179,7 @@ for epoch_num in range(num_epochs):
 					print('RPN is not producing bounding boxes that overlap the ground truth boxes. Check RPN settings or keep training.')
 
 			X, Y, img_data = next(data_gen_train)
-
+			# print(img_data['filepath'])
 			loss_rpn = model_rpn.train_on_batch(X, Y)
 
 			P_rpn = model_rpn.predict_on_batch(X)
@@ -240,6 +240,13 @@ for epoch_num in range(num_epochs):
 
 			progbar.update(iter_num+1, [('rpn_cls', losses[iter_num, 0]), ('rpn_regr', losses[iter_num, 1]),
 									  ('detector_cls', losses[iter_num, 2]), ('detector_regr', losses[iter_num, 3])])
+			# fileName = img_data['filepath']
+			# fileName = fileName[:-4]
+			# fileName = fileName[13:]
+			# print(fileName)
+		
+
+
 
 			iter_num += 1
 			
